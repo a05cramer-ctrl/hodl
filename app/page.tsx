@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
-const CA = "YOUR_CONTRACT_ADDRESS_HERE";
+const CA = "FwmvBo2iweKLJBSM5rgaWRvDYSnvQHcqSSevtaRYpump";
 
 export default function Home() {
   const [copied, setCopied] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const copyCA = () => {
     navigator.clipboard.writeText(CA);
@@ -13,10 +15,75 @@ export default function Home() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const clearFade = () => {
+    if (fadeIntervalRef.current) {
+      clearInterval(fadeIntervalRef.current);
+      fadeIntervalRef.current = null;
+    }
+  };
+
+  const handleCopyHoverEnter = () => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio("/hover-sound.mp3");
+      audioRef.current.loop = true;
+    }
+    clearFade();
+    audioRef.current.volume = 0;
+    audioRef.current.currentTime = 0;
+    audioRef.current.play().catch(() => {});
+    // Fade in to 30%
+    fadeIntervalRef.current = setInterval(() => {
+      if (audioRef.current && audioRef.current.volume < 0.1) {
+        audioRef.current.volume = Math.min(audioRef.current.volume + 0.01, 0.1);
+      } else {
+        clearFade();
+      }
+    }, 20);
+  };
+
+  const handleCopyHoverLeave = () => {
+    if (!audioRef.current) return;
+    clearFade();
+    // Fade out
+    fadeIntervalRef.current = setInterval(() => {
+      if (audioRef.current && audioRef.current.volume > 0.01) {
+        audioRef.current.volume = Math.max(audioRef.current.volume - 0.02, 0);
+      } else {
+        clearFade();
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
+      }
+    }, 20);
+  };
+
   return (
     <main className="min-h-screen bg-dark-900 relative">
+      {/* ──── GOLD BANNER ──── */}
+      <div className="gold-banner w-full h-[2px]" />
+
       {/* ──── HERO SECTION ──── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 radial-glow overflow-hidden">
+      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
+        {/* Hero background image — full bleed, blending into bg */}
+        <div className="absolute inset-0 pointer-events-none z-0 animate-on-load animate-fade-in">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/image.png"
+            alt=""
+            className="hero-bg-image absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[55%] w-[500px] sm:w-[600px] md:w-[700px] lg:w-[800px] max-w-none object-cover opacity-40 pointer-events-auto"
+            style={{ filter: "brightness(0.6) saturate(0.8)" }}
+          />
+          {/* Heavy fade on all sides */}
+          <div className="absolute inset-0" style={{
+            background: `
+              radial-gradient(ellipse 60% 55% at 50% 50%, transparent 0%, #0A0A0A 75%),
+              linear-gradient(to bottom, #0A0A0A 0%, transparent 12%, transparent 70%, #0A0A0A 95%),
+              linear-gradient(to right, #0A0A0A 0%, transparent 10%, transparent 90%, #0A0A0A 100%)
+            `
+          }} />
+        </div>
+
         {/* Ambient particles */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/4 left-1/4 w-1 h-1 rounded-full bg-gold-400/20 animate-float" />
@@ -31,7 +98,7 @@ export default function Home() {
         </div>
 
         {/* Top bar */}
-        <nav className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 sm:px-12 py-5 animate-on-load animate-fade-in z-10">
+        <nav className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 sm:px-12 py-5 animate-on-load animate-fade-in z-20">
           <span className="text-gold-gradient-static text-sm font-semibold tracking-[0.3em] uppercase">
             $HODL
           </span>
@@ -53,18 +120,6 @@ export default function Home() {
 
         {/* Hero content */}
         <div className="relative z-10 text-center max-w-4xl mx-auto">
-          {/* IMAGE — replace /hero.png with your image filename */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/image.png"
-            alt="AM HODLING"
-            className="w-40 h-40 sm:w-52 sm:h-52 mx-auto mb-8 rounded-full object-cover animate-on-load animate-fade-in"
-            style={{
-              boxShadow:
-                "0 0 40px rgba(255, 215, 0, 0.25), 0 0 80px rgba(255, 215, 0, 0.1)",
-            }}
-          />
-
           {/* Main headline */}
           <h1 className="text-gold-gradient glow-gold-strong text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-none animate-on-load animate-fade-in-up">
             AM H
@@ -72,23 +127,17 @@ export default function Home() {
             DLING
           </h1>
 
-          {/* Ticker */}
-          <p className="text-gold-gradient-static text-xl sm:text-2xl md:text-3xl font-bold tracking-[0.4em] mt-3 animate-on-load animate-fade-in-up-delay-1">
-            $HODL
+        </div>
+
+        {/* Subtext + Buttons — positioned at the bottom of the hero, below the image */}
+        <div className="absolute bottom-20 sm:bottom-24 left-0 right-0 z-10 text-center px-6 animate-on-load animate-fade-in-up-delay-2">
+          <p className="text-white/60 text-[11px] sm:text-xs md:text-sm font-light tracking-widest whitespace-nowrap">
+            INFINITIVE POSSIBILITIES &nbsp;|&nbsp; DESIGNED FOR GROWTH
           </p>
 
-          {/* Divider */}
-          <div className="gold-divider w-24 mx-auto mt-6 mb-6 animate-on-load animate-fade-in-delay-2" />
-
-          {/* Subtext */}
-          <p className="text-white/50 text-sm sm:text-base md:text-lg font-light tracking-wide max-w-md mx-auto animate-on-load animate-fade-in-up-delay-2">
-            Built for diamond hands. Designed for the cycle.
-          </p>
-
-          {/* Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8 animate-on-load animate-fade-in-up-delay-3">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
             <a
-              href="https://twitter.com"
+              href="https://x.com/JustHodl_dev"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-gold px-8 py-3 rounded-full text-sm uppercase tracking-[0.2em] min-w-[180px] flex items-center justify-center gap-2"
@@ -100,6 +149,8 @@ export default function Home() {
             </a>
             <button
               onClick={copyCA}
+              onMouseEnter={handleCopyHoverEnter}
+              onMouseLeave={handleCopyHoverLeave}
               className="btn-outline-gold px-8 py-3 rounded-full text-sm uppercase tracking-[0.2em] min-w-[180px] flex items-center justify-center gap-2"
             >
               {copied ? (
@@ -122,8 +173,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-on-load animate-fade-in-delay-5">
+        {/* Scroll indicator -- keep at very bottom */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-on-load animate-fade-in-delay-5 z-10">
           <div className="w-[1px] h-10 bg-gradient-to-b from-gold-400/40 to-transparent animate-pulse-glow" />
         </div>
       </section>
@@ -200,7 +251,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8 animate-on-load animate-fade-in-up-delay-2">
             <a
-              href="https://twitter.com"
+              href="https://x.com/JustHodl_dev"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-gold px-8 py-3 rounded-full text-sm uppercase tracking-[0.2em] min-w-[180px] flex items-center justify-center gap-2"
@@ -212,6 +263,8 @@ export default function Home() {
             </a>
             <button
               onClick={copyCA}
+              onMouseEnter={handleCopyHoverEnter}
+              onMouseLeave={handleCopyHoverLeave}
               className="btn-outline-gold px-8 py-3 rounded-full text-sm uppercase tracking-[0.2em] min-w-[180px] flex items-center justify-center gap-2"
             >
               {copied ? (
@@ -242,7 +295,7 @@ export default function Home() {
             $HODL
           </p>
           <p className="text-white/20 text-xs mt-3 tracking-wider">
-            Built for diamond hands. Designed for the cycle.
+            INFINITIVE POSSIBILITIES &nbsp;|&nbsp; DESIGNED FOR GROWTH
           </p>
         </div>
       </footer>
